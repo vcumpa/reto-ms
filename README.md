@@ -89,5 +89,5 @@ Los archivos de ejemplo están en [`test-data`](test-data):
 En la solicitud de carga, enviar el archivo como `archivo` (form-data) y el período como `periodo`.
 
 ## Video demostrativo
-
-Pendiente de agregar. El video demostrará el inicio de sesión, la carga de un Excel, la consulta de su estado y la notificación en Mailpit.
+El video demostrará el inicio de sesión, la carga de un Excel, la consulta de su estado y la notificación en Mailpit.
+https://streamable.com/2w1i06
