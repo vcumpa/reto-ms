@@ -1,0 +1,6 @@
+@CargaMasivaService_HostAddress = http://localhost:5230
+
+GET {{CargaMasivaService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+/*
+ * Dark mode basado en clase (".dark" en <html>), no solo en
+ * prefers-color-scheme, porque el usuario debe poder elegir el tema
+ * y esa preferencia se persiste (ver ThemeContext en Fase 4).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens del sistema.
+ * Paleta neutra + un acento, inspirada en Linear / Stripe Dashboard /
+ * Vercel / GitHub: mucho espacio en blanco, bordes sutiles, sombras
+ * suaves y un solo color de acento saturado.
+ */
+@theme {
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Acento de marca */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+
+  /* Neutros (superficie / texto en modo oscuro y claro) */
+  --color-surface-0: #ffffff;
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-800: #0f1117;
+  --color-surface-900: #0a0b0f;
+  --color-surface-950: #050609;
+
+  /* Colores de estado (CargaEstado del backend) */
+  --color-status-pendiente: #d97706; /* amarillo/ámbar */
+  --color-status-enproceso: #2563eb; /* azul */
+  --color-status-cargado: #7c3aed; /* morado */
+  --color-status-finalizado: #16a34a; /* verde */
+  --color-status-notificado: #64748b; /* gris */
+  --color-status-rechazado: #dc2626; /* rojo */
+  --color-status-bloqueado: #ea580c; /* naranja */
+
+  --radius-card: 0.75rem;
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  --shadow-card-hover:
+    0 4px 6px -1px rgb(0 0 0 / 0.06), 0 8px 16px -4px rgb(0 0 0 / 0.08);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-surface-50 dark:bg-surface-950 text-slate-900 transition-colors duration-200 dark:text-slate-100;
+  }
+
+  * {
+    @apply border-slate-200 dark:border-slate-800;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar discreto, coherente con el resto de la UI */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme(--color-surface-100) transparent;
+  }
+}

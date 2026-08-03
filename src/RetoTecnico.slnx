@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ApiGateway/ApiGateway.csproj" />
+  <Project Path="AuthService/AuthService.csproj" />
+  <Project Path="CargaMasivaService/CargaMasivaService.csproj" />
+  <Project Path="ControlService/ControlService.csproj" />
+  <Project Path="NotificationsService/NotificationsService.csproj" />
+</Solution>

@@ -1,0 +1,10 @@
+# No forman parte del bundle y, en particular, node_modules invalida el
+# contexto de construcción innecesariamente.
+node_modules
+dist
+.vite
+.git
+.env
+npm-debug.log*
+Dockerfile*
+docker-compose*

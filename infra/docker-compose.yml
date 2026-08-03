@@ -1,0 +1,176 @@
+services:
+  # Base de Datos
+  postgres:
+    image: postgres:16-alpine
+    container_name: ms_postgres
+    environment:
+      POSTGRES_DB: retoms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d retoms"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # Servicio de Colas
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ms_rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Dashboard Web (guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # Storage Distribuido (SeaweedFS Master + Volume + S3)
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: ms_seaweedfs
+    ports:
+      - "9333:9333" # Master UI/API
+      - "8080:8080" # Volume Server
+      - "8333:8333" # S3 API
+    command: "server -dir=/data -s3"
+    volumes:
+      - seaweed_data:/data
+
+  # Servidor de Correos Falso para Pruebas Locales
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ms_mailpit
+    ports:
+      - "8025:8025" # UI Web para ver correos recibidos
+      - "1025:1025" # Puerto SMTP para MailKit
+
+  apigateway:
+    build: ../src/ApiGateway
+    container_name: ms_apigateway
+    ports:
+      - "5000:8080"
+    depends_on:
+      - authservice
+      - controlservice
+      - cargamasivaservice
+    restart: on-failure
+    environment:
+      ReverseProxy__Clusters__auth-cluster__Destinations__destination1__Address: "http://authservice:8080"
+      ReverseProxy__Clusters__control-cluster__Destinations__destination1__Address: "http://controlservice:8080"
+      ReverseProxy__Clusters__carga-masiva-cluster__Destinations__destination1__Address: "http://cargamasivaservice:8080"
+
+  authservice:
+    build: ../src/AuthService
+    container_name: ms_authservice
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      ConnectionStrings__PostgresDb: "Host=postgres;Port=5432;Database=retoms;Username=postgres;Password=postgrespassword"
+      JwtSettings__SecretKey: "SuperSecretKeyForRetoTecnicoSenior2026CasinoAtlanticCity!"
+      JwtSettings__Issuer: "RetoMicroserviciosAuth"
+      JwtSettings__Audience: "RetoMicroserviciosApi"
+      JwtSettings__ExpirationHours: "4"
+
+  controlservice:
+    build: ../src/ControlService
+    container_name: ms_controlservice
+    ports:
+      - "5002:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+    restart: on-failure
+    environment:
+      ConnectionStrings__PostgresDb: "Host=postgres;Port=5432;Database=retoms;Username=postgres;Password=postgrespassword"
+      RabbitMQ__HostName: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: "guest"
+      RabbitMQ__Password: "guest"
+      SeaweedFS__ServiceUrl: "http://seaweedfs:8333"
+      SeaweedFS__AccessKey: "any"
+      SeaweedFS__SecretKey: "any"
+      SeaweedFS__BucketName: "archivos-excel"
+
+  cargamasivaservice:
+    build: ../src/CargaMasivaService
+    container_name: ms_cargamasivaservice
+    ports:
+      - "5003:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+    restart: on-failure
+    environment:
+      ConnectionStrings__PostgresDb: "Host=postgres;Port=5432;Database=retoms;Username=postgres;Password=postgrespassword"
+      RabbitMQ__HostName: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: "guest"
+      RabbitMQ__Password: "guest"
+      RabbitMQ__QueueName: "cola-cargas"
+      RabbitMQ__NotificationQueueName: "notificaciones"
+      SeaweedFS__ServiceUrl: "http://seaweedfs:8333"
+      SeaweedFS__AccessKey: "any"
+      SeaweedFS__SecretKey: "any"
+      SeaweedFS__BucketName: "archivos-excel"
+
+  notificationsservice:
+    build: ../src/NotificationsService
+    container_name: ms_notificationsservice
+    ports:
+      - "5004:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      ConnectionStrings__PostgresDb: "Host=postgres;Port=5432;Database=retoms;Username=postgres;Password=postgrespassword"
+      RabbitMQ__HostName: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__UserName: "guest"
+      RabbitMQ__Password: "guest"
+      RabbitMQ__QueueName: "notificaciones"
+      Smtp__Host: "mailpit"
+      Smtp__Port: "1025"
+      Smtp__From: "notificaciones@retoms.com"
+
+  frontend:
+    build:
+      context: ../src/FrontendReto
+      dockerfile: Dockerfile
+    container_name: ms_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      apigateway:
+        condition: service_started
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  seaweed_data:

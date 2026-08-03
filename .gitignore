@@ -1,0 +1,36 @@
+# === Compilación y Salidas ===
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# === Herramientas y Editores ===
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# === Paquetes y Dependencias ===
+packages/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+
+# === Archivos del Sistema y Logs ===
+*.log
+.DS_Store
+Thumbs.db
+
+# --- Node / React (frontend) ---
+node_modules/
+dist/
+build/
+.vite/
+
+# --- Otros ---
+*.tgz
+*.zip
+*.tar
+*.gz
